@@ -68,7 +68,7 @@ face-recognition-opencv/
 
 - Ensure the dataset contains clear face images in different angles under good face light
 
-= Adjust Haar Cascade parameters if detection is inaccurate.
+- Adjust Haar Cascade parameters if detection is inaccurate.
 
 - LBPH is effective for small datasets but may struggle with large variations in lighting and pose.
 
