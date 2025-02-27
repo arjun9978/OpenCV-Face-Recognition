@@ -1,56 +1,55 @@
-''''
-Capture multiple Faces from multiple users to be stored on a DataBase (dataset directory)
-	==> Faces will be stored on a directory: dataset/ (if does not exist, pls create one)
-	==> Each face will have a unique numeric integer ID as 1, 2, 3, etc                       
-
-Based on original code by Anirban Kar: https://github.com/thecodacus/Face-Recognition    
-
-Developed by Marcelo Rovai - MJRoBot.org @ 21Feb18    
-
-'''
-
 import cv2
 import os
+import time
 
-cam = cv2.VideoCapture(0)
-cam.set(3, 640) # set video width
-cam.set(4, 480) # set video height
+# Create 'dataset' folder if it doesn't exist
+if not os.path.exists('dataset'):
+    os.makedirs('dataset')
+
+cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # Faster camera startup on Windows
+cam.set(3, 640)  # Set video width
+cam.set(4, 480)  # Set video height
+
+# Flush initial frames to reduce warm-up delay
+for i in range(5):  
+    ret, _ = cam.read()
 
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-# For each person, enter one numeric face id
-face_id = input('\n enter user id end press <return> ==>  ')
+face_id = input('\n Enter user id and press <return> ==>  ')
 
-print("\n [INFO] Initializing face capture. Look the camera and wait ...")
-# Initialize individual sampling face count
+print("\n [INFO] Initializing face capture. Look at the camera and wait...")
+
 count = 0
-
-while(True):
-
+while True:
     ret, img = cam.read()
-    img = cv2.flip(img, -1) # flip video image vertically
+    if not ret:
+        print("[ERROR] Camera frame not captured. Exiting...")
+        break
+
+    img = cv2.flip(img, 1)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_detector.detectMultiScale(gray, 1.3, 5)
+    faces = face_detector.detectMultiScale(gray, 1.1, 4)  # Reduced scale factor for faster detection
 
-    for (x,y,w,h) in faces:
-
-        cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)     
+    for (x, y, w, h) in faces:
+        cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
         count += 1
 
-        # Save the captured image into the datasets folder
-        cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
-
+        # Save face image in 'dataset' folder
+        cv2.imwrite(f"dataset/User.{face_id}.{count}.jpg", gray[y:y + h, x:x + w])
         cv2.imshow('image', img)
 
-    k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
-    if k == 27:
-        break
-    elif count >= 30: # Take 30 face sample and stop video
-         break
+        # Introduce a small delay between captures to give you time to adjust your position
+        time.sleep(1)  # 1-second delay between capturing images
 
-# Do a bit of cleanup
-print("\n [INFO] Exiting Program and cleanup stuff")
+    # Optional: Display countdown or prompt
+    print(f"Captured {count} images, please adjust your position.")
+    
+    # Stop capturing when either 30 images are taken or the ESC key is pressed
+    k = cv2.waitKey(10) & 0xff
+    if k == 27 or count >= 30:  # ESC key or 30 images captured
+        break
+
+print("\n [INFO] Exiting Program and cleanup...")
 cam.release()
 cv2.destroyAllWindows()
-
-
